@@ -1,0 +1,893 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "UITask API",
+    "version": "1.0.0",
+    "description": "Backend API for UITask (auth, users, polls, tasks, notifications)."
+  },
+  "servers": [
+    {
+      "url": "https://main.d26c0dtqiqy9sq.amplifyapp.com/",
+      "description": "Local server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "tags": ["System"],
+        "summary": "Health check",
+        "responses": {
+          "200": {
+            "description": "API is running",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": "API is running..."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Register a new user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "firstName": { "type": "string", "example": "Nguyen" },
+                  "lastName": { "type": "string", "example": "An" },
+                  "email": { "type": "string", "format": "email", "example": "an@example.com" },
+                  "password": { "type": "string", "format": "password", "example": "123456" }
+                },
+                "required": ["firstName", "lastName", "email", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "User created successfully" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Email already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "Email already exists" }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "Something went wrong" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Login and receive JWT token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string", "format": "email", "example": "an@example.com" },
+                  "password": { "type": "string", "format": "password", "example": "123456" }
+                },
+                "required": ["email", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string",
+                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "example": "678asd1234abcd" },
+                        "firstName": { "type": "string", "example": "Nguyen" },
+                        "lastName": { "type": "string", "example": "An" },
+                        "email": { "type": "string", "format": "email", "example": "an@example.com" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "Invalid credentials" }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "User not found" }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "Something went wrong" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/search": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Search users by name or email",
+        "description": "Return up to 10 users whose firstName, lastName, or email matches the given keyword.",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search keyword for firstName, lastName, or email",
+            "example": "nguyen"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of matched users (can be empty)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "firstName": { "type": "string", "example": "Nguyen" },
+                      "lastName":  { "type": "string", "example": "An" },
+                      "email":     { "type": "string", "format": "email", "example": "nguyen.an@example.com" },
+                      "avatar":    { "type": "string", "example": "https://cdn.example.com/avatars/u123.png" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "Server error" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/polls": {
+      "get": {
+        "tags": ["Polls"],
+        "summary": "Get list of polls related to current user",
+        "description": "Return polls where the current user is host or listed in participants.",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of polls with response stats",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "_id": { "type": "string", "example": "674a1c..." },
+                      "title": { "type": "string", "example": "Weekly team sync" },
+                      "description": { "type": "string", "example": "Find a common time for weekly meeting" },
+                      "timezone": { "type": "string", "example": "Asia/Ho_Chi_Minh" },
+                      "startDate": { "type": "string", "format": "date-time" },
+                      "endDate": { "type": "string", "format": "date-time" },
+                      "timeWindow": { "type": "string", "example": "08:00-22:00" },
+                      "status": { "type": "string", "example": "Open" },
+                      "responses": { "type": "string", "example": "2 / 5 submitted" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Polls"],
+        "summary": "Create a new poll",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title":        { "type": "string", "example": "Project meeting" },
+                  "description":  { "type": "string", "example": "Pick time for UIT group project" },
+                  "timezone":     { "type": "string", "example": "Asia/Ho_Chi_Minh" },
+                  "startDate":    { "type": "string", "format": "date-time", "example": "2025-12-10T00:00:00Z" },
+                  "endDate":      { "type": "string", "format": "date-time", "example": "2025-12-15T00:00:00Z" },
+                  "timeWindow":   { "type": "string", "example": "08:00-21:00" },
+                  "participants": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "example": ["Nguyen An", "Tran Binh"]
+                  },
+                  "host":         { "type": "string", "example": "Nguyen Leader" },
+                  "invitedIds": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "example": ["674a1c...", "674b2d..."]
+                  }
+                },
+                "required": ["title", "startDate", "endDate"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Poll created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Created poll document"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input / Start/End date missing"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/api/polls/{id}": {
+      "delete": {
+        "tags": ["Polls"],
+        "summary": "Delete a poll (only host can delete)",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Poll ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Poll deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "Poll deleted" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authorized (not poll owner)"
+          },
+          "404": {
+            "description": "Poll not found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "get": {
+        "tags": ["Polls"],
+        "summary": "Get poll details (public)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Poll ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Poll details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Poll document"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Poll not found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/api/polls/{id}/vote": {
+      "post": {
+        "tags": ["Polls"],
+        "summary": "Submit or update vote for a poll (login required)",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Poll ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "voter": {
+                    "type": "string",
+                    "example": "Nguyen An"
+                  },
+                  "slots": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "example": ["2025-12-11T09:00:00Z", "2025-12-11T10:00:00Z"]
+                  }
+                },
+                "required": ["voter", "slots"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Vote submitted and poll updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Updated poll document"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Poll is closed"
+          },
+          "404": {
+            "description": "Poll not found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/api/polls/{id}/join": {
+      "post": {
+        "tags": ["Polls"],
+        "summary": "Join poll by name (public)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Poll ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string", "example": "Tran Binh" }
+                },
+                "required": ["name"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Joined poll successfully (poll updated)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Updated poll document"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Poll not found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/api/polls/{id}/finalize": {
+      "post": {
+        "tags": ["Polls"],
+        "summary": "Finalize poll schedule (host only)",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Poll ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "finalTime": {
+                    "type": "string",
+                    "example": "2025-12-12T09:00:00Z"
+                  }
+                },
+                "required": ["finalTime"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Poll finalized and notifications sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Updated poll document"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authorized (not poll owner)"
+          },
+          "404": {
+            "description": "Poll not found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/api/tasks": {
+      "get": {
+        "tags": ["Tasks"],
+        "summary": "Get all tasks of current user",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of tasks belonging to the authenticated user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "_id":        { "type": "string", "example": "6750a1c..." },
+                      "title":      { "type": "string", "example": "Finish STAT3013 report" },
+                      "description":{ "type": "string", "example": "Write section 2.3 and clean figures" },
+                      "deadline":   { "type": "string", "format": "date-time", "example": "2025-12-15T17:00:00Z" },
+                      "status":     { "type": "string", "example": "pending" },
+                      "user":       { "type": "string", "example": "674f9b..." },
+                      "createdAt":  { "type": "string", "format": "date-time" },
+                      "updatedAt":  { "type": "string", "format": "date-time" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (missing or invalid token)"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Tasks"],
+        "summary": "Create a new task for current user",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "example": "Prepare UITask presentation"
+                  },
+                  "description": {
+                    "type": "string",
+                    "example": "Make slides about features and architecture"
+                  },
+                  "deadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2025-12-20T09:00:00Z"
+                  },
+                  "status": {
+                    "type": "string",
+                    "example": "pending"
+                  }
+                },
+                "required": ["title"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Task created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Created task document"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/tasks/{id}": {
+      "put": {
+        "tags": ["Tasks"],
+        "summary": "Update a task (only owner can update)",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Task ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title":      { "type": "string", "example": "Update title" },
+                  "description":{ "type": "string", "example": "Update description" },
+                  "deadline":   { "type": "string", "format": "date-time" },
+                  "status":     { "type": "string", "example": "done" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Task updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Updated task document"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authorized (not task owner or invalid token)"
+          },
+          "404": {
+            "description": "Task not found"
+          },
+          "400": {
+            "description": "Bad request"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Tasks"],
+        "summary": "Delete a task (only owner can delete)",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Task ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Task deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "Task deleted" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authorized"
+          },
+          "404": {
+            "description": "Task not found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/api/notifications": {
+      "get": {
+        "tags": ["Notifications"],
+        "summary": "Get notifications of current user",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of notifications and unread count",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "notifications": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "_id":       { "type": "string", "example": "6750b1c..." },
+                          "type":      { "type": "string", "example": "invite" },
+                          "title":     { "type": "string", "example": "New Poll Invitation" },
+                          "message":   { "type": "string", "example": "Anh has invited you to vote on 'UIT weekly sync'." },
+                          "link":      { "type": "string", "example": "/dashboard/groups/674ac..." },
+                          "isRead":    { "type": "boolean", "example": false },
+                          "createdAt": { "type": "string", "format": "date-time" }
+                        }
+                      }
+                    },
+                    "unreadCount": {
+                      "type": "integer",
+                      "example": 3
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/api/notifications/{id}/read": {
+      "put": {
+        "tags": ["Notifications"],
+        "summary": "Mark a single notification as read",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Notification ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notification marked as read",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/api/notifications/all/read": {
+      "put": {
+        "tags": ["Notifications"],
+        "summary": "Mark all notifications of current user as read",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "responses": {
+          "200": {
+            "description": "All notifications marked as read",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    }
+  }
+}
