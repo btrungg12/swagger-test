@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://uitaskbackend-env.eba-k6q6suyr.ap-southeast-2.elasticbeanstalk.com",
+      "url": "https://web-backend-40q1.onrender.com",
       "description": "Local server"
     }
   ],
