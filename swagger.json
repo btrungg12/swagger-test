@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "https://web-backend-40q1.onrender.com",
+      "url": "https://backend-test-qimo.onrender.com/",
       "description": "Local server"
     }
   ],
